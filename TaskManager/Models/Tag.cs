@@ -15,7 +15,7 @@ namespace TaskManager.Models
         private string _color;
         private bool _isSelected;
 
-
+        public int Id   { get; set; }
         public string Name
         {
             get => _name;

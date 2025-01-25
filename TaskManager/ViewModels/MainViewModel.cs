@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Windows.Data;
 using System.Windows.Input;
+using TaskManager.Enums;
 using TaskManager.Models;
 using TaskManager.Repositories;
 using TaskManager.Services;
@@ -27,7 +28,8 @@ namespace TaskManager.ViewModels
         private ICollectionView _filteredTasks;
         private ObservableCollection<Tag> _selectedTags = new();
         private readonly TaskValidator _validator = new();
-
+        private ObservableCollection<Tag> _selectedFilterTags = new();
+        private Priority? _selectedPriority;
 
         public MainViewModel(
             ICategoryRepository categoryRepository,
@@ -122,20 +124,46 @@ namespace TaskManager.ViewModels
             set => _taskManager.SelectedTask = value;
         }
 
+        public ObservableCollection<Tag> SelectedFilterTags
+        {
+            get => _selectedFilterTags;
+            set => SetField(ref _selectedFilterTags, value);
+        }
+
+        public Priority? SelectedPriority
+        {
+            get => _selectedPriority;
+            set
+            {
+                SetField(ref _selectedPriority, value);
+                UpdateFilter();
+            }
+        }
+
         public event Action<string> OnErrorOccurred;
 
         private bool TaskFilter(object item)
         {
             if (item is not TaskItem task) return false;
 
+            // Text search
             var textMatch = string.IsNullOrWhiteSpace(SearchText) ||
-                          task.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                          task.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+                          (task.Title?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                          (task.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false);
 
-            var categoryMatch = SelectedCategory == null || task.Category == SelectedCategory;
-            var tagMatch = SelectedFilterTag == null || task.Tags.Contains(SelectedFilterTag);
+            // Category filter
+            var categoryMatch = SelectedCategory == null || task.Category?.Id == SelectedCategory.Id;
 
-            return textMatch && categoryMatch && tagMatch;
+            // Tag filter (match any selected tag)
+            var tagMatch = !SelectedFilterTags.Any() ||
+                         SelectedFilterTags.Any(selectedTag =>
+                             task.Tags.Any(taskTag => taskTag.Id == selectedTag.Id));
+
+            // Priority filter
+            var priorityMatch = !SelectedPriority.HasValue ||
+                              task.Priority == SelectedPriority.Value;
+
+            return textMatch && categoryMatch && tagMatch && priorityMatch;
         }
 
         private void UpdateFilter()
@@ -216,7 +244,8 @@ namespace TaskManager.ViewModels
 
         private bool CanSaveTask(object parameter)
         {
-                return !_validator.Validate(SelectedTask).IsValid;
+            return SelectedTask != null &&
+                 _validator.Validate(SelectedTask).IsValid;
         }
 
         public event Action<string>? OnReminderTriggered;

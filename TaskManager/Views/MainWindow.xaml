@@ -42,12 +42,16 @@
 
         <!-- Left Panel - Task List -->
         <DockPanel Margin="10">
-            <!-- Search and Filter -->
+            <!-- Enhanced Filter Section -->
+
             <StackPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+                <Label FontSize="18" FontWeight="Bold" Content="Task Search"/>
                 <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                         Margin="0,5" Padding="5"/>
+                         Margin="0,5" Padding="5"
+                          Tag="Search tasks..."/>
 
                 <!-- Category Filter -->
+                <Label>Category:</Label>
                 <ComboBox ItemsSource="{Binding Categories}"
                           SelectedItem="{Binding SelectedCategory}"
                           DisplayMemberPath="Name"
@@ -65,24 +69,42 @@
                 </ComboBox>
 
                 <!-- Tag Filter -->
+                <!-- Multi-Tag Filter -->
+                <Label>Tagas:</Label>
+
                 <ListBox ItemsSource="{Binding AvailableTags}"
-         SelectionMode="Multiple"
-         Margin="0,5">
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="ListBoxItem">
-                            <Setter Property="IsSelected" Value="{Binding IsSelected}"/>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
+                         SelectionMode="Multiple"
+                         Margin="0,5">
+                    <i:Interaction.Behaviors>
+                        <utilities:ListBoxSelectedItemsBehavior 
+                            SelectedItems="{Binding SelectedFilterTags, Mode=TwoWay}"/>
+                    </i:Interaction.Behaviors>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <CheckBox Content="{Binding Name}" 
-                      IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
+                                      IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+                <!-- Priority Filter -->
+                <ComboBox ItemsSource="{utilities:EnumBindingSource EnumType=enums:Priority}"
+                          SelectedItem="{Binding SelectedPriority}"
+                          Margin="0,5">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Rectangle Width="16" Height="16"
+                                           Fill="{Binding Converter={StaticResource PriorityToColorConverter}}"/>
+                                <TextBlock Text="{Binding}" Margin="5,0,0,0"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
             </StackPanel>
 
             <!-- Task List -->
+            <StackPanel>
+            <Label>Task List</Label>
             <ListView ItemsSource="{Binding FilteredTasks}" 
               SelectedItem="{Binding SelectedTask}"
               ScrollViewer.VerticalScrollBarVisibility="Auto">
@@ -121,7 +143,9 @@
                     </ContextMenu>
                 </ListView.ContextMenu>
             </ListView>
+            </StackPanel>
         </DockPanel>
+            
 
         <!-- Middle Panel - Task Details -->
         <StackPanel Grid.Column="1" Margin="10">
