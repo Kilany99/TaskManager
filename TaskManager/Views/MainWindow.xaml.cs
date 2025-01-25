@@ -8,6 +8,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using TaskManager.Utilities;
+using TaskManager.ViewModels;
 
 namespace TaskManager
 {
@@ -19,8 +21,19 @@ namespace TaskManager
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = new MainViewModel(
+                ServiceLocator.TaskManager,
+                ServiceLocator.ReminderService,
+                ServiceLocator.StatisticsService
+            );
+
+            ((MainViewModel)DataContext).OnReminderTriggered += ShowReminderNotification;
         }
 
-        
+        private void ShowReminderNotification(string message)
+        {
+            Dispatcher.Invoke(() =>
+                MessageBox.Show(message, "Task Reminder", MessageBoxButton.OK));
+        }
     }
 }

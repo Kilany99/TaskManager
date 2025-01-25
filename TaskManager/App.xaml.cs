@@ -1,6 +1,8 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Windows;
+using TaskManager.Utilities;
+using TaskManager.ViewModels;
 
 namespace TaskManager
 {
@@ -15,18 +17,13 @@ namespace TaskManager
 
             var mainWindow = new MainWindow
             {
-                DataContext = new MainViewModel()
+                DataContext = new MainViewModel(
+                    ServiceLocator.TaskManager,
+                    ServiceLocator.ReminderService,
+                    ServiceLocator.StatisticsService
+                )
             };
             mainWindow.Show();
         }
-
-        protected override void OnExit(ExitEventArgs e)
-        {
-            if (MainWindow?.DataContext is MainViewModel vm)
-                vm.SaveTasks();
-
-            base.OnExit(e);
-        }
     }
-
 }
