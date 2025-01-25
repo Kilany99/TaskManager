@@ -4,12 +4,14 @@
         xmlns:local="clr-namespace:TaskManager.Utilities.Converters"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:enums="clr-namespace:TaskManager.Enums"
+        xmlns:local1="clr-namespace:TaskManager.Models.Enums"
         xmlns:utilities="clr-namespace:TaskManager.Utilities"
         Title="Personal Task Manager" Height="450" Width="1000">
+    
     <Window.Resources>
         <utilities:PriorityToColorConverter x:Key="PriorityToColorConverter"/>
-        
         <local:BooleanToStrikethroughConverter x:Key="BooleanToStrikethroughConverter"/>
+        <local:ThemeToTextConverter x:Key="ThemeToTextConverter"/>
         <Style TargetType="TextBox">
             <Style.Triggers>
                 <Trigger Property="Validation.HasError" Value="True">
@@ -32,6 +34,12 @@
             </Style.Triggers>
         </Style>
     </Window.Resources>
+    <Window.InputBindings>
+        <KeyBinding Command="{Binding AddCommand}" Gesture="Ctrl+N"/>
+        <KeyBinding Command="{Binding SaveCommand}" Gesture="Ctrl+S"/>
+        <KeyBinding Command="{Binding DeleteCommand}" Gesture="Delete"/>
+        <KeyBinding Command="{Binding ToggleThemeCommand}" Gesture="Ctrl+T"/>
+    </Window.InputBindings>
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -87,6 +95,8 @@
                     </ListBox.ItemTemplate>
                 </ListBox>
                 <!-- Priority Filter -->
+                <Label>Priority:</Label>
+
                 <ComboBox ItemsSource="{utilities:EnumBindingSource EnumType=enums:Priority}"
                           SelectedItem="{Binding SelectedPriority}"
                           Margin="0,5">
@@ -100,11 +110,19 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
-            </StackPanel>
+                <Label>Task List</Label>
 
+            </StackPanel>
+            <CheckBox Content="Recurring Task">
+                <CheckBox.IsChecked>
+                    <Binding Path="NewTask.Recurrence" Mode="TwoWay">
+                        <Binding.Converter>
+                            <local:BoolToRecurrenceConverter/>
+                        </Binding.Converter>
+                    </Binding>
+                </CheckBox.IsChecked>
+            </CheckBox>
             <!-- Task List -->
-            <StackPanel>
-            <Label>Task List</Label>
             <ListView ItemsSource="{Binding FilteredTasks}" 
               SelectedItem="{Binding SelectedTask}"
               ScrollViewer.VerticalScrollBarVisibility="Auto">
@@ -120,7 +138,9 @@
                              Width="200"
                              TextDecorations="{Binding IsCompleted, 
                                 Converter={StaticResource BooleanToStrikethroughConverter}}"/>
-
+                            <TextBlock Text="{Binding Description}" 
+                               TextWrapping="Wrap"
+                               Foreground="Gray"/>          
                             <TextBlock Text="{Binding DueDate, StringFormat='Due: {0:dd MMM yyyy}'}"
                              Margin="10,0"
                              Foreground="Gray"/>
@@ -131,7 +151,7 @@
                         </StackPanel>
                     </DataTemplate>
                 </ListView.ItemTemplate>
-
+              
                 <ListView.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Edit" 
@@ -143,7 +163,7 @@
                     </ContextMenu>
                 </ListView.ContextMenu>
             </ListView>
-            </StackPanel>
+            
         </DockPanel>
             
 
@@ -218,6 +238,26 @@
              Margin="0,0,0,10"
              Padding="10,5"
              FontWeight="Bold"/>
+
+            <Label>Change Theme</Label>
+            <Grid  Height="29">
+                <Button Content="{Binding IsDarkTheme, Converter={StaticResource ThemeToTextConverter}}"
+        Command="{Binding ToggleThemeCommand}"
+        Style="{StaticResource AccentButtonStyle}"
+        Padding="10,5"
+        Margin="5"
+        Foreground="{DynamicResource ForegroundBrush}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}"
+                    CornerRadius="4">
+                                <ContentPresenter HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
         </StackPanel>
     </Grid>
 </Window>

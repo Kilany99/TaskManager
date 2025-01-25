@@ -3,6 +3,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using TaskManager.Enums;
@@ -30,13 +31,15 @@ namespace TaskManager.ViewModels
         private readonly TaskValidator _validator = new();
         private ObservableCollection<Tag> _selectedFilterTags = new();
         private Priority? _selectedPriority;
+        private bool _isDarkTheme;
 
         public MainViewModel(
             ICategoryRepository categoryRepository,
             ITagRepository tagRepository,
             ITaskManagerService taskManager,
             IReminderService reminderService,
-            IStatisticsService statisticsService)
+            IStatisticsService statisticsService,
+            INotificationService notificationService)
         {
             _taskManager = taskManager;
             _reminderService = reminderService;
@@ -49,6 +52,8 @@ namespace TaskManager.ViewModels
             DeleteCommand = new RelayCommand(DeleteTask, CanDeleteTask);
             SaveCommand = new RelayCommand(SaveTask, CanSaveTask);
             EditCommand = new RelayCommand(EditTask, CanEditTask);
+            ToggleThemeCommand = new RelayCommand(_ => ToggleTheme());
+            notificationService.StartMonitoring();
 
 
             // Initialize data
@@ -69,6 +74,7 @@ namespace TaskManager.ViewModels
         public ICommand DeleteCommand { get; }
         public ICommand SaveCommand { get; }
         public ICommand EditCommand { get; }
+        public ICommand ToggleThemeCommand { get; }
 
 
         public ObservableCollection<Category> Categories { get; }
@@ -138,6 +144,11 @@ namespace TaskManager.ViewModels
                 SetField(ref _selectedPriority, value);
                 UpdateFilter();
             }
+        }
+        public bool IsDarkTheme
+        {
+            get => _isDarkTheme;
+            set => SetField(ref _isDarkTheme, value);
         }
 
         public event Action<string> OnErrorOccurred;
@@ -246,6 +257,30 @@ namespace TaskManager.ViewModels
         {
             return SelectedTask != null &&
                  _validator.Validate(SelectedTask).IsValid;
+        }
+        private void ToggleTheme()
+        {
+            _isDarkTheme = !_isDarkTheme;
+            ApplyTheme(_isDarkTheme ? "Dark" : "Light");
+        }
+
+        private void ApplyTheme(string themeName)
+        {
+            var themeUri = new Uri($"/Themes/{themeName}Theme.xaml", UriKind.Relative);
+
+            // Find and remove only the theme dictionary
+            var existingTheme = Application.Current.Resources.MergedDictionaries
+                .FirstOrDefault(d => d.Source?.OriginalString.Contains("Theme.xaml") == true);
+
+            if (existingTheme != null)
+            {
+                Application.Current.Resources.MergedDictionaries.Remove(existingTheme);
+            }
+
+            // Add new theme
+            Application.Current.Resources.MergedDictionaries.Add(
+                new ResourceDictionary { Source = themeUri }
+            );
         }
 
         public event Action<string>? OnReminderTriggered;

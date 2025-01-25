@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using TaskManager.Services;
 using TaskManager.Utilities;
 using TaskManager.ViewModels;
 
@@ -26,7 +27,8 @@ namespace TaskManager
                 ServiceLocator.TagRepository,
                 ServiceLocator.TaskManager,
                 ServiceLocator.ReminderService,
-                ServiceLocator.StatisticsService
+                ServiceLocator.StatisticsService,
+                ServiceLocator.notificationService
             );
 
             ((MainViewModel)DataContext).OnReminderTriggered += ShowReminderNotification;

@@ -22,7 +22,9 @@ namespace TaskManager
                     ServiceLocator.TagRepository,
                     ServiceLocator.TaskManager,
                     ServiceLocator.ReminderService,
-                    ServiceLocator.StatisticsService
+                    ServiceLocator.StatisticsService,
+                    ServiceLocator.notificationService
+                    
                 )
             };
             mainWindow.Show();

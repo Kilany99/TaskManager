@@ -16,5 +16,6 @@ namespace TaskManager.Utilities
         public static IStatisticsService StatisticsService => new StatisticsService();
         public static ICategoryRepository CategoryRepository => new JsonCategoryRepository();
         public static ITagRepository TagRepository => new JsonTagRepository();
+        public static INotificationService notificationService = new NotificationService(TaskManager);
     }
 }

@@ -21,6 +21,8 @@ namespace TaskManager.Services
         void UpdateTask(TaskItem task);
 
         void UpdateFilter();
+        void CompleteTask(TaskItem task);
+
     }
 
     public class TaskManagerService : ITaskManagerService
@@ -87,6 +89,25 @@ namespace TaskManager.Services
         {
 
             _taskRepository.Save(task);
+        }
+
+        public void CompleteTask(TaskItem task)
+        {
+            if (task.IsRecurring)
+            {
+                var newTask = new TaskItem
+                {
+                    Title = task.Title,
+                    Description = task.Description,
+                    DueDate = task.NextDueDate ?? DateTime.Now.AddDays(1),
+                    Recurrence = task.Recurrence,
+                    RecurrenceInterval = task.RecurrenceInterval
+                };
+                newTask.Reschedule();
+                Tasks.Add(newTask);
+            }
+            Tasks.Remove(task);
+            SaveAll();
         }
     }
 }

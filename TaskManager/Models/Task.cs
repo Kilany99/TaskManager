@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TaskManager.Enums;
 using TaskManager.Models;
+using TaskManager.Models.Enums;
 using TaskManager.Utilities.Validators;
 
 namespace TaskManager
@@ -139,9 +140,24 @@ namespace TaskManager
         }
 
 
- 
+        public RecurrencePattern Recurrence { get; set; } = RecurrencePattern.None;
+        public int RecurrenceInterval { get; set; } = 1;
+        public DateTime? NextDueDate { get; set; }
+        public bool IsRecurring => Recurrence != RecurrencePattern.None;
 
-        
+        public void Reschedule()
+        {
+            if (!IsRecurring) return;
+
+            NextDueDate = DueDate.Add(Recurrence switch
+            {
+                RecurrencePattern.Daily => TimeSpan.FromDays(RecurrenceInterval),
+                RecurrencePattern.Weekly => TimeSpan.FromDays(7 * RecurrenceInterval),
+                RecurrencePattern.Monthly => TimeSpan.FromDays(30 * RecurrenceInterval), // Approximation
+                _ => TimeSpan.Zero
+            });
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
         public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
