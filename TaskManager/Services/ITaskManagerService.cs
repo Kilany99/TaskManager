@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TaskManager.Enums;
 using TaskManager.Repositories;
 
 namespace TaskManager.Services
@@ -12,7 +13,7 @@ namespace TaskManager.Services
     {
         ObservableCollection<TaskItem> Tasks { get; }
         TaskItem SelectedTask { get; set; }
-        void AddTask();
+        void AddTask(TaskItem task);
         void DeleteTask();
         void SaveTask();
         void UpdateFilter();
@@ -37,10 +38,14 @@ namespace TaskManager.Services
             set => _selectedTask = value;
         }
 
-        public void AddTask()
+        public void AddTask(TaskItem task)
         {
-            Tasks.Add(new TaskItem { DueDate = DateTime.Now.AddDays(1) });
-            SelectedTask = Tasks.Last();
+            // Validate before adding
+            if (task.HasErrors)
+                throw new InvalidOperationException("Cannot add invalid task");
+
+            task.CreatedDate = DateTime.Now;
+            Tasks.Add(task);
             SaveAll();
         }
 

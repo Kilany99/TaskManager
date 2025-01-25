@@ -13,6 +13,8 @@ namespace TaskManager.Models
     {
         private string _name;
         private string _color;
+        private bool _isSelected;
+
 
         public string Name
         {
@@ -24,6 +26,15 @@ namespace TaskManager.Models
         {
             get => _color;
             set { _color = value; OnPropertyChanged(); }
+        }
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                _isSelected = value;
+                OnPropertyChanged();
+            }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

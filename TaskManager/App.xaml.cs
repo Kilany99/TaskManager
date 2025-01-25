@@ -18,6 +18,8 @@ namespace TaskManager
             var mainWindow = new MainWindow
             {
                 DataContext = new MainViewModel(
+                    ServiceLocator.CategoryRepository,
+                    ServiceLocator.TagRepository,
                     ServiceLocator.TaskManager,
                     ServiceLocator.ReminderService,
                     ServiceLocator.StatisticsService

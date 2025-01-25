@@ -14,5 +14,7 @@ namespace TaskManager.Utilities
         public static ITaskManagerService TaskManager => new TaskManagerService(TaskRepository);
         public static IReminderService ReminderService => new ReminderService( () => TaskManager.Tasks );
         public static IStatisticsService StatisticsService => new StatisticsService();
+        public static ICategoryRepository CategoryRepository => new JsonCategoryRepository();
+        public static ITagRepository TagRepository => new JsonTagRepository();
     }
 }

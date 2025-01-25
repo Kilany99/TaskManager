@@ -22,6 +22,8 @@ namespace TaskManager
         {
             InitializeComponent();
             DataContext = new MainViewModel(
+                ServiceLocator.CategoryRepository,
+                ServiceLocator.TagRepository,
                 ServiceLocator.TaskManager,
                 ServiceLocator.ReminderService,
                 ServiceLocator.StatisticsService
@@ -35,5 +37,7 @@ namespace TaskManager
             Dispatcher.Invoke(() =>
                 MessageBox.Show(message, "Task Reminder", MessageBoxButton.OK));
         }
+
+        
     }
 }

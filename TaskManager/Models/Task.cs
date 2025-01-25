@@ -65,13 +65,13 @@ namespace TaskManager
 
         public string Description
         {
-            get => _title??string.Empty;
+            get => _description;
             set
             {
-                _title = value; OnPropertyChanged();
+                _description = value;
+                OnPropertyChanged();
             }
         }
-
         [CustomValidation(typeof(TaskItem), nameof(ValidateDueDate))]
         public DateTime DueDate
         {
@@ -97,6 +97,7 @@ namespace TaskManager
             get => _status;
             set { _status = value; OnPropertyChanged(); }
         }
+        [CustomValidation(typeof(TaskItem), nameof(ValidateCategory))]
 
         public Category Category
         {
@@ -113,11 +114,16 @@ namespace TaskManager
 
         public IEnumerable GetErrors(string? propertyName) => _validator.GetErrors(propertyName);
 
-
+        [CustomValidation(typeof(TaskItem), nameof(ValidateTags))]
         public ObservableCollection<Tag> Tags
         {
             get => _tags;
-            set { _tags = value; OnPropertyChanged(); }
+            set
+            {
+                _tags = value;
+                ValidateTags(value, new ValidationContext(this));
+                OnPropertyChanged();
+            }
         }
 
         public string Error => throw new NotImplementedException();
@@ -128,7 +134,20 @@ namespace TaskManager
                 ? new ValidationResult("Due date must be in the future")
                 : ValidationResult.Success;
         }
+        public static ValidationResult ValidateCategory(Category category, ValidationContext context)
+        {
+            return category == null
+                ? new ValidationResult("Category is required")
+                : ValidationResult.Success;
+        }
 
+        public static ValidationResult ValidateTags(ObservableCollection<Tag> tags, ValidationContext context)
+        {
+            var instance = (TaskItem)context.ObjectInstance;
+            return tags?.Any(t => t.IsSelected) != true
+                ? new ValidationResult("At least one tag must be selected")
+                : ValidationResult.Success;
+        }
         public event PropertyChangedEventHandler? PropertyChanged;
         public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 
