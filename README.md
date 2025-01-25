@@ -10,6 +10,8 @@ A modern desktop task management application built with WPF (.NET) following MVV
 - 📊 **Statistics**: View completion metrics and productivity insights
 - 🎨 **Custom UI**: Clean and intuitive WPF interface with validation
 - 💾 **Data Persistence**: JSON-based local storage
+- **Recurring Task**: functionality with daily/weekly/monthly patterns
+- **Theme Switching**: with improved resource management  
 
 ## Tech Stack
 - **Frontend**: WPF (XAML) with MVVM pattern
