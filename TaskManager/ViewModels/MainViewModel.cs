@@ -2,12 +2,14 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Windows.Data;
 using System.Windows.Input;
 using TaskManager.Models;
 using TaskManager.Repositories;
 using TaskManager.Services;
 using TaskManager.Utilities;
+using TaskManager.Utilities.Validators;
 
 namespace TaskManager.ViewModels
 {
@@ -24,6 +26,7 @@ namespace TaskManager.ViewModels
         private Tag _selectedFilterTag;
         private ICollectionView _filteredTasks;
         private ObservableCollection<Tag> _selectedTags = new();
+        private readonly TaskValidator _validator = new();
 
 
         public MainViewModel(
@@ -41,8 +44,10 @@ namespace TaskManager.ViewModels
 
             // Initialize commands
             AddCommand = new RelayCommand(AddTask, CanAddTask);
-            DeleteCommand = new RelayCommand(_ => DeleteTask(), _ => CanDeleteTask());
-            SaveCommand = new RelayCommand(_ => SaveTask(), _ => CanSaveTask());
+            DeleteCommand = new RelayCommand(DeleteTask, CanDeleteTask);
+            SaveCommand = new RelayCommand(SaveTask, CanSaveTask);
+            EditCommand = new RelayCommand(EditTask, CanEditTask);
+
 
             // Initialize data
             Categories = new ObservableCollection<Category>(_categoryRepository.GetAll());
@@ -58,9 +63,10 @@ namespace TaskManager.ViewModels
             _taskManager.Tasks.CollectionChanged += (_, _) => UpdateFilter();
         }
 
-        public ICommand AddCommand;
+        public ICommand AddCommand { get; }
         public ICommand DeleteCommand { get; }
         public ICommand SaveCommand { get; }
+        public ICommand EditCommand { get; }
 
 
         public ObservableCollection<Category> Categories { get; }
@@ -154,7 +160,8 @@ namespace TaskManager.ViewModels
 
         private void AddTask(object parameter)
         {
-            if (NewTask.HasErrors) return;
+            if (NewTask.HasErrors)
+                throw new Exception("Has Errors");
 
             var newTask = new TaskItem
             {
@@ -178,21 +185,39 @@ namespace TaskManager.ViewModels
             }
         }
 
-        private void DeleteTask()
+        private bool CanEditTask(object parameter)
+         => SelectedTask != null && !SelectedTask.HasErrors;
+
+        private void EditTask(object parameter)
         {
-            _taskManager.DeleteTask();
+            _taskManager.UpdateTask(SelectedTask);
             UpdateStatistics();
         }
 
-        private void SaveTask()
+        private bool CanDeleteTask(object parameter)
+            => SelectedTask != null;
+
+        private void DeleteTask(object parameter)
         {
-            _taskManager.SaveTask();
+            _taskManager.DeleteTask(SelectedTask);
+            SelectedTask = null;
             UpdateStatistics();
         }
+        private void SaveTask(object parameter)
+        {
+            var results = _validator.Validate(SelectedTask);
+            if (!results.IsValid)
+            {
+                var errors = string.Join("\n", results.Errors.Select(e => e.ErrorMessage));
+                throw new ValidationException(errors);
+            }
+            _taskManager.SaveTask(SelectedTask);
+        }
 
-        private bool CanDeleteTask() => _taskManager.SelectedTask != null;
-        private bool CanSaveTask() => _taskManager.SelectedTask != null &&
-                                    !_taskManager.SelectedTask.HasErrors;
+        private bool CanSaveTask(object parameter)
+        {
+                return !_validator.Validate(SelectedTask).IsValid;
+        }
 
         public event Action<string>? OnReminderTriggered;
     }

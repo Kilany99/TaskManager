@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,7 +15,7 @@ using TaskManager.Utilities.Validators;
 
 namespace TaskManager
 {
-    public class TaskItem : INotifyPropertyChanged, IDataErrorInfo
+    public class TaskItem : INotifyPropertyChanged
     {
         private string? _title;
         private string? _description;
@@ -24,12 +25,15 @@ namespace TaskManager
         private Status _status;
         private Category? _category;
         private DateTime _createdDate;
-        private readonly TaskValidator _validator;
+        private readonly TaskValidator _validator = new();
         private ObservableCollection<Tag> _tags;
+        private readonly Dictionary<string, List<string>> _errors = new();
+
         public TaskItem()
         {
             _validator = new TaskValidator();
-            _validator.ErrorsChanged += (s, e) => ErrorsChanged?.Invoke(this, e);
+            Tags = new ObservableCollection<Tag>();
+
         }
         public string this[string columnName]
         {
@@ -49,18 +53,22 @@ namespace TaskManager
                 return validationResults.FirstOrDefault()?.ErrorMessage ?? string.Empty;
             }
         }
-
+        public Guid Id { get; } = Guid.NewGuid();
         public Priority Priority
         {
             get => _priority;
             set { _priority = value; OnPropertyChanged(); }
         }
 
-        [Required(ErrorMessage = "Title is required")]
         public string Title
         {
             get => _title;
-            set { _title = value; OnPropertyChanged(); }
+            set
+            {
+                _title = value;
+                OnPropertyChanged();
+                _validator.Validate(this);
+            }
         }
 
         public string Description
@@ -72,7 +80,6 @@ namespace TaskManager
                 OnPropertyChanged();
             }
         }
-        [CustomValidation(typeof(TaskItem), nameof(ValidateDueDate))]
         public DateTime DueDate
         {
             get => _dueDate;
@@ -80,8 +87,10 @@ namespace TaskManager
             {
                 _dueDate = value;
                 OnPropertyChanged();
+                _validator.Validate(this);
             }
         }
+
         public bool IsCompleted
         {
             get => _isCompleted;
@@ -97,7 +106,6 @@ namespace TaskManager
             get => _status;
             set { _status = value; OnPropertyChanged(); }
         }
-        [CustomValidation(typeof(TaskItem), nameof(ValidateCategory))]
 
         public Category Category
         {
@@ -110,44 +118,30 @@ namespace TaskManager
             get => _createdDate;
             set { _createdDate = value; OnPropertyChanged(); }
         }
-        public bool HasErrors => _validator.HasErrors;
+        public bool HasErrors => _errors.Any();
 
-        public IEnumerable GetErrors(string? propertyName) => _validator.GetErrors(propertyName);
-
-        [CustomValidation(typeof(TaskItem), nameof(ValidateTags))]
+        public IEnumerable GetErrors(string propertyName)
+        {
+            return _validator.Validate(this).Errors
+                .Where(e => e.PropertyName == propertyName)
+                .Select(e => e.ErrorMessage);
+        }
         public ObservableCollection<Tag> Tags
         {
             get => _tags;
             set
             {
                 _tags = value;
-                ValidateTags(value, new ValidationContext(this));
                 OnPropertyChanged();
+                _validator.Validate(this);
+                Tags.CollectionChanged += (s, e) => _validator.Validate(this);
             }
         }
 
-        public string Error => throw new NotImplementedException();
 
-        public static ValidationResult? ValidateDueDate(DateTime dueDate, ValidationContext context)
-        {
-            return dueDate < DateTime.Now.Date
-                ? new ValidationResult("Due date must be in the future")
-                : ValidationResult.Success;
-        }
-        public static ValidationResult ValidateCategory(Category category, ValidationContext context)
-        {
-            return category == null
-                ? new ValidationResult("Category is required")
-                : ValidationResult.Success;
-        }
+ 
 
-        public static ValidationResult ValidateTags(ObservableCollection<Tag> tags, ValidationContext context)
-        {
-            var instance = (TaskItem)context.ObjectInstance;
-            return tags?.Any(t => t.IsSelected) != true
-                ? new ValidationResult("At least one tag must be selected")
-                : ValidationResult.Success;
-        }
+        
         public event PropertyChangedEventHandler? PropertyChanged;
         public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
 

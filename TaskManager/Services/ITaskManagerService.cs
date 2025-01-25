@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TaskManager.Enums;
+using TaskManager.Models;
 using TaskManager.Repositories;
 
 namespace TaskManager.Services
@@ -14,8 +15,11 @@ namespace TaskManager.Services
         ObservableCollection<TaskItem> Tasks { get; }
         TaskItem SelectedTask { get; set; }
         void AddTask(TaskItem task);
-        void DeleteTask();
-        void SaveTask();
+        void DeleteTask(TaskItem task);
+        void SaveTask(TaskItem task);
+        
+        void UpdateTask(TaskItem task);
+
         void UpdateFilter();
     }
 
@@ -49,25 +53,41 @@ namespace TaskManager.Services
             SaveAll();
         }
 
-        public void DeleteTask()
+        public void DeleteTask(TaskItem task)
         {
-            if (SelectedTask == null) return;
-
-            Tasks.Remove(SelectedTask);
-            SaveAll();
+            if (Tasks.Contains(task))
+            {
+                Tasks.Remove(task);
+                SaveAll();
+            }
         }
 
-        public void SaveTask()
+        public void UpdateTask(TaskItem task)
         {
-            if (SelectedTask == null || SelectedTask.HasErrors) return;
-
-            _taskRepository.Save(SelectedTask);
-            UpdateFilter();
+            var existing = Tasks.FirstOrDefault(t => t.Id == task.Id);
+            if (existing != null)
+            {
+                existing.Title = task.Title;
+                existing.Description = task.Description;
+                existing.DueDate = task.DueDate;
+                existing.Priority = task.Priority;
+                existing.Category = task.Category;
+                existing.Tags = new ObservableCollection<Tag>(task.Tags);
+                
+            }
         }
 
         public void UpdateFilter() => Tasks = new ObservableCollection<TaskItem>(Tasks);
+        public void SaveAll()
+        {
+            _taskRepository.SaveAll(Tasks);
 
-        public void SaveAll() => _taskRepository.SaveAll(Tasks);
+        }
+        public void SaveTask(TaskItem task)
+        {
+
+            _taskRepository.Save(task);
+        }
     }
 }
 

@@ -32,8 +32,15 @@ namespace TaskManager.Repositories
 
         public void SaveAll(ObservableCollection<TaskItem> tasks)
         {
-            var json = JsonSerializer.Serialize(tasks);
-            File.WriteAllText(FilePath, json);
+            try
+            {
+                var json = JsonSerializer.Serialize(tasks);
+                File.WriteAllText(FilePath, json);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         public void Save(TaskItem task) => SaveAll(GetAll());
